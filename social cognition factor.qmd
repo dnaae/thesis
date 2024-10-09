@@ -1,0 +1,206 @@
+---
+title: "Extraction of social cognition factor"
+format: html
+editor: visual
+---
+
+```{r}
+# Define a vector with all the package names
+packages <- c("lavaan", "psych", "psychTools", "nFactors", "knitr", "dplyr", 
+              "ggplot2", "reshape2", "caret","outliers")
+
+# Function to check if the package is installed, and install if it's missing
+check_and_install <- function(pkg){
+  if (!require(pkg, character.only = TRUE)) {
+    install.packages(pkg, dependencies = TRUE)
+    library(pkg, character.only = TRUE)
+  } else {
+    message(paste(pkg, "is already installed."))
+  }
+}
+
+# Loop over the packages and apply the check_and_install function
+for (pkg in packages) {
+  check_and_install(pkg)
+}
+```
+
+```{r}
+# Step 1: Read the file
+df <- read.csv("personal", stringsAsFactors = FALSE)
+
+# Step 2: Separate the Subject column before scaling
+subjects <- df$Subject  # Retain the subject column separately
+df <- df %>% select(-Subject)  # Remove the 'Subject' column for scaling
+
+# Step 3: Scale the dataframe
+df <- as.data.frame(scale(df, center = TRUE, scale = TRUE))
+
+# Function to plot histograms and Q-Q plots
+plot_data_distribution <- function(df) {
+  numeric_cols <- sapply(df, is.numeric)  # Identify numeric columns
+  df_numeric <- df[, numeric_cols]        # Subset to numeric columns only
+
+  for (var in colnames(df_numeric)) {
+    # Histogram
+    p1 <- ggplot(df_numeric, aes_string(x = var)) +
+      geom_histogram(aes(y = ..density..), binwidth = 0.5, fill = "blue", color = "black") +
+      stat_function(fun = dnorm, args = list(mean = mean(df_numeric[[var]], na.rm = TRUE), sd = sd(df_numeric[[var]], na.rm = TRUE)), color = "red") +
+      ggtitle(paste("Histogram and Normal Curve for", var)) +
+      theme_minimal()
+    
+    # Print histogram
+    print(p1)
+  }
+}
+
+# Apply the function
+plot_data_distribution(df)
+```
+
+```{r}
+# Function to calculate z-scores and remove outliers
+remove_outliers_from_column <- function(column, threshold = 3) {
+  if (is.numeric(column) && length(unique(column)) > 2) {
+    z_scores <- (column - mean(column, na.rm = TRUE)) / sd(column, na.rm = TRUE)
+    outliers <- which(abs(z_scores) > threshold)
+    return(outliers)
+  }
+  return(integer(0))  # No outliers if the column is not numeric
+}
+
+# Identify outlier rows for every numeric column
+outlier_indices <- integer(0)  # Initialize empty vector to store outlier indices
+numeric_cols <- sapply(df, is.numeric)
+
+for (col_name in names(df)[numeric_cols]) {
+  outliers <- remove_outliers_from_column(df[[col_name]])
+  outlier_indices <- union(outlier_indices, outliers)  # Union to avoid duplicate indices
+}
+
+# Remove outliers from the dataframe
+df <- df[-outlier_indices, ]
+
+# Retain the subjects based on the cleaned indices
+subjects_cleaned <- subjects[-outlier_indices]
+```
+
+```{r}
+# Function to plot histograms and Q-Q plots after outlier removal
+plot_data_distribution(df)
+
+# Create adjusted columns and drop the original columns in one go
+df <- df %>%
+  mutate(
+    Emotion_RT_Adj = Emotion_Task_Face_Median_RT - WM_Task_0bk_Median_RT,
+    Language_RT_Adj = Language_Task_Story_Median_RT - WM_Task_0bk_Median_RT,
+    Social_RT_Adj = Social_Task_Median_RT_TOM - WM_Task_0bk_Median_RT,
+    ER40_CRT_Adj = ER40_CRT - WM_Task_0bk_Median_RT
+  ) %>%
+  # Keep only the adjusted columns and retain Subject column
+  select(Emotion_RT_Adj, Language_RT_Adj, Social_RT_Adj, ER40_CRT_Adj) %>%
+  mutate(Subject = subjects_cleaned)  # Add the cleaned Subject column here
+```
+
+```{r}
+# Compute the correlation matrix
+cor_matrix <- cor(df[,-5], use = "complete.obs")
+
+# Melt the correlation matrix for ggplot
+melted_cor_matrix <- melt(cor_matrix)
+
+# Plot heatmap
+ggplot(data = melted_cor_matrix, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  theme_minimal() +
+  labs(x = "Measure", y = "Measure", fill = "Correlation") + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),  # Rotate x-axis labels
+    axis.text.y = element_text(size = 8)  
+  )
+
+# Perform Parallel Analysis
+parallel_results <- fa.parallel(cor_matrix, 
+                                n.obs = nrow(df),
+                                fm = 'pa', # Perform principal axis factoring
+                                fa = 'fa', # Use factor analysis
+                                n.iter = 1000, # Number of iterations
+                                correct = TRUE, # Correct for bias
+                                plot = TRUE) # Plot the results
+```
+
+```{r}
+# Set a random seed for reproducibility
+set.seed(123)
+
+# Split the data into training (70%) and testing (30%) sets
+train_test_split <- df %>%
+  # Sample rows for training set
+  sample_frac(0.7) %>%
+  # Create test set by filtering out training rows
+  { list(train = ., test = anti_join(df, ., by = "Subject")) }
+
+# Get the training and testing sets
+train_set <- train_test_split$train %>%
+  select(-Subject) %>% # Drop the Subject ID
+  mutate(across(everything(), ~ as.numeric(.))) # Ensure all columns are numeric
+
+test_set <- train_test_split$test %>%
+  select(-Subject) %>% # Drop the Subject ID
+  mutate(across(everything(), ~ as.numeric(.))) # Ensure all columns are numeric
+
+# Print the dimensions of the training and testing sets
+cat("Training Set Dimensions:", dim(train_set), "\n")
+cat("Testing Set Dimensions:", dim(test_set), "\n")
+test_set
+```
+
+```{r}
+#Run EFA
+efa <- fa(train_set, nfactors = 1, rotate = "none")
+
+# Print EFA results
+print(efa)
+
+# Check the factor loadings
+loadings <- efa$loadings
+print(loadings)
+fa.diagram(efa)
+```
+
+```{r}
+# cross-validation CFA
+cfa_model <- '
+  # Factor 1 (ML1)
+  ML1 =~  ER40_CRT_Adj+Language_RT_Adj+Social_RT_Adj+Emotion_RT_Adj
+
+'
+cfa_fit <- cfa(cfa_model, data = test_set)
+
+# Print the summary of the CFA results
+summary(cfa_fit, fit.measures = TRUE)
+#summary(cfa_fit, standardized=TRUE)
+```
+
+```{r}
+# Fit the CFA model on the complete dataset
+cfa_fit_full <- cfa(cfa_model, data = df) 
+# Compute factor scores for all subjects
+factor_scores <- lavPredict(cfa_fit_full)
+# Extract the scores for the social cognition factor
+social_cognition_scores <- factor_scores[, 1]  
+# Convert the factor scores to a data frame
+social_cognition_scores_df <- as.data.frame(social_cognition_scores)
+# Add Subject IDs back to the scores dataframe
+social_cognition_scores_df <- cbind(Subject= df$Subject, social_cognition_scores_df)
+```
+
+```{r}
+
+# Specify the file path where you want to save the data frame
+output_file_path <- "social_cognition_scores.csv"
+
+# Save the data frame as a CSV file
+write.csv(social_cognition_scores_df, file = output_file_path, row.names = FALSE)
+```
