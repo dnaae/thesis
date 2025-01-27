@@ -1,6 +1,6 @@
-#Welcome to the repository of the project; "Beating Genetic Odds: Enhancing Social Cognition with Brain Compensation" 👋
+# Welcome to the repository of the project; "Beating Genetic Odds: Enhancing Social Cognition with Brain Compensation" 👋
 
-Hey there! Welcome aboard! 🎉 You’re about to dive into an exciting pipeline that combines behavioral, genetic, and fMRI data—developed as part of my Bioinformatics MSc graduation project. 🚀
+## Hey there! Welcome aboard! 🎉 You’re about to dive into an exciting pipeline that combines behavioral, genetic, and fMRI data—developed as part of my Bioinformatics MSc graduation project. 🚀
 
 In this project, we used data from the Human Connectome Project, to investigate if genetic-moderated functional connectivity matrices are predictive of social cognition scores. This project was an attempt to reframe autism, in the context of brain compensation, based on the observation of neurotypical adults with a high genetic predisposition for autism who do not exhibit symptoms. The workflow entailed model selection for the extraction of social cognition scores using factor analysis, calculation of polygenic risk scores using PRSice and cross-validation for threshold selection, and behavioral predictions using connectome-based predictive modeling.
 
