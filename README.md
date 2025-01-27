@@ -1,4 +1,3 @@
-Thesis 
 This repository contains code and data for my thesis project:
 "Beating genetic odds: Enhancing social cognition with brain compensation"
 
