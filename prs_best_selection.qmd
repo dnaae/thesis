@@ -61,7 +61,7 @@ for (threshold in p_value_columns) {
     # Fit the model
     model <- lm(formula, data = train_data)
     
-    # Predict and calculate residuals for test set
+    # Predict and calculate residuals for the test set
     predictions <- predict(model, newdata = test_data)
     residuals_list[folds[[fold]]] <- test_data$SocialScore - predictions
     
@@ -102,10 +102,10 @@ print(paste("Best PRS threshold: ", best_threshold))
 ```
 
 ```{r}
-#After selecting best threshold print regression statistics
+#After selecting the best threshold print regression statistics
 
 best_threshold<-"Pt_0.0287001"
-#Print regresssion metrics
+#Print regression metrics
 best_formula <- as.formula(substitute(SocialScore ~ threshold, 
                                       list(threshold = as.name(best_threshold))))
 best_model <- lm(best_formula, data = best_train_data)
@@ -129,7 +129,7 @@ cat("p-value for F-statistic: ", pf(best_model_summary$fstatistic[1],
 # Compute scaling parameters (mean and standard deviation) for the best threshold on the entire dataset
 best_threshold <- "Pt_0.0287001"  
 
-# Calculate mean and standard deviation on the full dataset (merged_data)
+# Calculate the mean and standard deviation on the full dataset (merged_data)
 full_data_mean <- mean(merged_data[[best_threshold]], na.rm = TRUE)
 full_data_sd <- sd(merged_data[[best_threshold]], na.rm = TRUE)
 
