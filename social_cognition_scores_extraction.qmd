@@ -241,25 +241,25 @@ perform_cfa <- function(df_test, model) {
 ```
 
 ```{r}
-#Execution with model specific functions
+#Execution with model-specific functions
 execute_analysis <- function(file_path, model_type = NULL) {
   # Read and process data
   print('Reading file')
   df <- read.csv(file_path, stringsAsFactors = FALSE)
   df$Subject <- factor(df$Subject)
-  # Adjust ER40_CR if model type is "accuracies"
+  # Adjust ER40_CR if the model type is "accuracies"
   if (model_type == "accuracies") {
     df$ER40_CR <- (df$ER40_CR / 40) * 100
     print("Adjusted ER40_CR for accuracies model.")
   }
-  # Adjust ER40_CR if model type is "accuracies"
+  # Adjust ER40_CR if the model type is "accuracies"
   if (model_type == "all") {
     df$ER40_CR <- (df$ER40_CR / 40) * 100
     print("Adjusted ER40_CR for accuracies model.")
   }
   # Conditional processing based on model type
   if (model_type == "questionnaire") {
-    # Invert variables for questionnaire model
+    # Invert variables for the questionnaire model
     df$Loneliness_Unadj <- 100 - df$Loneliness_Unadj
     df$PercHostil_Unadj <- 100 - df$PercHostil_Unadj
     df$PercReject_Unadj <- 100 - df$PercReject_Unadj
@@ -387,7 +387,7 @@ execute_analysis <- function(file_path, model_type = NULL) {
   # Run EFA on the training set
   run_efa(df_train, nfactors = 1)
   
-  # Define CFA model based on model type
+  # Define CFA model based on the model type
   if (model_type == "w0bk") {
     model <- 'SocialScore =~ Emotion_Task_Face_Median_RT_Adj + 
               Language_Task_Story_Median_RT_Adj + 
@@ -464,7 +464,7 @@ social_scores<-read.csv("/no0bk_social_cognition_scores.csv")
 sc_density_histogram_plot <- ggplot(social_scores, aes(x = .data[[social]])) +
   # Add histogram with density scaling
   geom_histogram(aes(y = ..density..), binwidth = 0.1, fill = "blue", alpha = 0.4, color = "black") +
-  # Add normal distribution curve using the data's mean and standard deviation
+  # Add a normal distribution curve using the data's mean and standard deviation
   stat_function(
     fun = dnorm, 
     args = list(mean = mean(social_scores[[social]], na.rm = TRUE), sd = sd(social_scores[[social]], na.rm = TRUE)),
