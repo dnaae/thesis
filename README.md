@@ -1,4 +1,4 @@
-Welcome to the repository of the project; "Beating Genetic Odds: Enhancing Social Cognition with Brain Compensation" 👋
+#Welcome to the repository of the project; "Beating Genetic Odds: Enhancing Social Cognition with Brain Compensation" 👋
 
 Hey there! Welcome aboard! 🎉 You’re about to dive into an exciting pipeline that combines behavioral, genetic, and fMRI data—developed as part of my Bioinformatics MSc graduation project. 🚀
 
