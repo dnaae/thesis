@@ -57,9 +57,7 @@ if __name__ == "__main__":
     ############################################################################
     # 1. Calculate the average framewise displacement for each subject
     ############################################################################
-    # movement_folder = infolder / 'data/movement_anonymised'
     movement_folder = infolder / 'movement_anonymised'
-    #movement_outfolder = infolder / 'data/movement_cleaned'
     movement_outfolder = infolder / 'movement_cleaned'
     os.makedirs(movement_outfolder, exist_ok=True)
 
@@ -89,7 +87,6 @@ if __name__ == "__main__":
                 index=False
             )
             avgFD = calculate_avgFD(movement_outfile)
-            # Example naming convention: session_encoding_subject.txt
             filename_parts = movement_file.split('_')
 
             FDs.append({
